@@ -21,6 +21,7 @@ const (
 
 type deployResult struct {
 	index int
+	notes string
 	err   error
 }
 
@@ -28,6 +29,7 @@ type executeModel struct {
 	definitions []config.ResolvedDefinition
 	statuses    []deployStatus
 	errors      []string
+	notes       []string
 	current     int
 	allDone     bool
 }
@@ -37,6 +39,7 @@ func newExecuteModel(defs []config.ResolvedDefinition) executeModel {
 		definitions: defs,
 		statuses:    make([]deployStatus, len(defs)),
 		errors:      make([]string, len(defs)),
+		notes:       make([]string, len(defs)),
 		current:     0,
 	}
 }
@@ -51,8 +54,8 @@ func (m executeModel) Init() tea.Cmd {
 func (m executeModel) runNext(index int) tea.Cmd {
 	def := m.definitions[index]
 	return func() tea.Msg {
-		err := helm.Install(context.Background(), def)
-		return deployResult{index: index, err: err}
+		notes, err := helm.Install(context.Background(), def)
+		return deployResult{index: index, notes: notes, err: err}
 	}
 }
 
@@ -64,6 +67,7 @@ func (m executeModel) Update(msg tea.Msg) (executeModel, tea.Cmd) {
 			m.errors[msg.index] = msg.err.Error()
 		} else {
 			m.statuses[msg.index] = statusSuccess
+			m.notes[msg.index] = msg.notes
 		}
 
 		next := msg.index + 1
@@ -112,6 +116,15 @@ func (m executeModel) View() string {
 	}
 
 	if m.allDone {
+		for i, def := range m.definitions {
+			if m.notes[i] != "" {
+				b.WriteString("\n")
+				b.WriteString(promptStyle.Render(fmt.Sprintf("Notes for %s:", def.Name)))
+				b.WriteString("\n")
+				b.WriteString(strings.TrimSpace(m.notes[i]))
+				b.WriteString("\n")
+			}
+		}
 		b.WriteString("\n")
 		b.WriteString(dimStyle.Render("enter/q: exit"))
 	}

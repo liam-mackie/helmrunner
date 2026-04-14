@@ -85,20 +85,20 @@ func locateChart(cfg *action.Configuration, chart config.Chart) (string, error) 
 	return ref, nil
 }
 
-func Install(ctx context.Context, def config.ResolvedDefinition) error {
+func Install(ctx context.Context, def config.ResolvedDefinition) (string, error) {
 	cfg, err := newConfig(def.Namespace)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	chartPath, err := locateChart(cfg, def.Chart)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	chartObj, err := loader.Load(chartPath)
 	if err != nil {
-		return fmt.Errorf("loading chart: %w", err)
+		return "", fmt.Errorf("loading chart: %w", err)
 	}
 
 	// Check if release already exists to decide install vs upgrade
@@ -113,25 +113,31 @@ func Install(ctx context.Context, def config.ResolvedDefinition) error {
 		install.Namespace = def.Namespace
 		install.CreateNamespace = true
 
-		_, err = install.RunWithContext(ctx, chartObj, def.Values)
+		rel, err := install.RunWithContext(ctx, chartObj, def.Values)
 		if err != nil {
-			return fmt.Errorf("helm install: %w", err)
+			return "", fmt.Errorf("helm install: %w", err)
 		}
-		return nil
+		if rel != nil && rel.Info != nil {
+			return rel.Info.Notes, nil
+		}
+		return "", nil
 	} else if err != nil {
-		return fmt.Errorf("checking release history: %w", err)
+		return "", fmt.Errorf("checking release history: %w", err)
 	}
 
 	// Existing release — use upgrade
 	upgrade := action.NewUpgrade(cfg)
 	upgrade.Namespace = def.Namespace
 
-	_, err = upgrade.RunWithContext(ctx, def.Release, chartObj, def.Values)
+	rel, err := upgrade.RunWithContext(ctx, def.Release, chartObj, def.Values)
 	if err != nil {
-		return fmt.Errorf("helm upgrade: %w", err)
+		return "", fmt.Errorf("helm upgrade: %w", err)
+	}
+	if rel != nil && rel.Info != nil {
+		return rel.Info.Notes, nil
 	}
 
-	return nil
+	return "", nil
 }
 
 func Template(ctx context.Context, def config.ResolvedDefinition) (string, error) {
