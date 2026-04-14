@@ -1,0 +1,16 @@
+name: my-app
+release: "{{ .environment }}-my-app"
+namespace: "{{ .environment }}"
+chart:
+  source: oci://registry.example.com/charts/my-app
+variables:
+  - name: environment
+    description: "Target environment"
+    default: "staging"
+  - name: replicas
+    description: "Number of replicas"
+    default: "3"
+values:
+  replicaCount: "{{ .replicas }}"
+  image:
+    tag: latest
