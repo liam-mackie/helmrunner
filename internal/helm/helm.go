@@ -72,7 +72,7 @@ func locateChart(cfg *action.Configuration, chart config.Chart) (string, error) 
 		install := action.NewInstall(cfg)
 		install.RepoURL = chart.Repository
 		install.Version = chart.Version
-		cp, err := install.ChartPathOptions.LocateChart(ref, cli.New())
+		cp, err := install.LocateChart(ref, cli.New())
 		if err != nil {
 			return "", fmt.Errorf("locating chart: %w", err)
 		}

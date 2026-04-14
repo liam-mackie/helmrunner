@@ -122,11 +122,11 @@ func (m reviewModel) View() string {
 	b.WriteString(titleStyle.Render(fmt.Sprintf("Review — %s the following:", action)))
 	b.WriteString("\n\n")
 
-	b.WriteString(fmt.Sprintf("  %-20s %-25s %-20s %s\n",
+	fmt.Fprintf(&b, "  %-20s %-25s %-20s %s\n",
 		dimStyle.Render("NAME"),
 		dimStyle.Render("RELEASE"),
 		dimStyle.Render("NAMESPACE"),
-		dimStyle.Render("CHART")))
+		dimStyle.Render("CHART"))
 	b.WriteString("\n")
 
 	for i, def := range m.definitions {
