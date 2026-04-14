@@ -2,6 +2,7 @@ package helm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/registry"
+	"helm.sh/helm/v3/pkg/storage/driver"
 )
 
 func chartRef(chart config.Chart) string {
@@ -99,13 +101,33 @@ func Install(ctx context.Context, def config.ResolvedDefinition) error {
 		return fmt.Errorf("loading chart: %w", err)
 	}
 
+	// Check if release already exists to decide install vs upgrade
+	histClient := action.NewHistory(cfg)
+	histClient.Max = 1
+	_, err = histClient.Run(def.Release)
+
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		// New release — use install
+		install := action.NewInstall(cfg)
+		install.ReleaseName = def.Release
+		install.Namespace = def.Namespace
+
+		_, err = install.RunWithContext(ctx, chartObj, def.Values)
+		if err != nil {
+			return fmt.Errorf("helm install: %w", err)
+		}
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("checking release history: %w", err)
+	}
+
+	// Existing release — use upgrade
 	upgrade := action.NewUpgrade(cfg)
-	upgrade.Install = true
 	upgrade.Namespace = def.Namespace
 
 	_, err = upgrade.RunWithContext(ctx, def.Release, chartObj, def.Values)
 	if err != nil {
-		return fmt.Errorf("helm upgrade --install: %w", err)
+		return fmt.Errorf("helm upgrade: %w", err)
 	}
 
 	return nil
