@@ -111,6 +111,7 @@ func Install(ctx context.Context, def config.ResolvedDefinition) error {
 		install := action.NewInstall(cfg)
 		install.ReleaseName = def.Release
 		install.Namespace = def.Namespace
+		install.CreateNamespace = true
 
 		_, err = install.RunWithContext(ctx, chartObj, def.Values)
 		if err != nil {
