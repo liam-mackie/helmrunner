@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/liam-mackie/helmrunner/compare/v1.0.0...v1.0.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* combine release-please and goreleaser into single workflow ([d36c9eb](https://github.com/liam-mackie/helmrunner/commit/d36c9ebb901643d3210ddc77a393ce30f5b8ca4d))
+* use PAT for release-please to trigger goreleaser workflow ([8b33330](https://github.com/liam-mackie/helmrunner/commit/8b3333096936f31615f428cc89392dec1834b843))
+
 ## 1.0.0 (2026-04-14)
 
 
