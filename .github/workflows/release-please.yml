@@ -1,4 +1,4 @@
-name: Release
+name: Release Please
 
 on:
   push:
@@ -7,61 +7,12 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  packages: write
-  id-token: write
-  attestations: write
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v4
-        id: release
         with:
           release-type: go
-
-  goreleaser:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.release_created }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-      id-token: write
-      attestations: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-
-      - uses: sigstore/cosign-installer@v3
-
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          version: latest
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Sign checksums
-        run: cosign sign-blob --yes checksums.txt --output-signature checksums.txt.sig --output-certificate checksums.txt.pem
-        working-directory: dist
-
-      - name: Upload signatures
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload ${{ needs.release-please.outputs.tag_name }} dist/checksums.txt.sig dist/checksums.txt.pem
-
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: dist/helmrunner_*
+          token: ${{ secrets.RELEASE_TOKEN }}
