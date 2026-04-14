@@ -1,0 +1,8 @@
+name: nginx
+chart:
+  repository: https://charts.bitnami.com/bitnami
+  name: nginx
+  version: "18.1.0"
+values:
+  service:
+    type: ClusterIP
