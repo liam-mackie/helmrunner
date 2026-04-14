@@ -28,7 +28,7 @@ type Definition struct {
 	Namespace string                 `yaml:"namespace"`
 	Chart     Chart                  `yaml:"chart"`
 	Variables []Variable             `yaml:"variables"`
-	Values    map[string]interface{} `yaml:"values"`
+	Values    map[string]any `yaml:"values"`
 }
 
 func Load(dir string) ([]Definition, error) {
